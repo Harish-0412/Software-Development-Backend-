@@ -9,7 +9,11 @@ import asyncio
 from typing import Any, Optional
 
 from deepeval.models import DeepEvalBaseLLM
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage, SystemMessage
+from langchain_core.outputs import ChatResult, ChatGeneration
 from config.settings import settings
+
 
 
 # -----------------------------------------------------------------------
@@ -159,15 +163,59 @@ def _build_aws_bedrock(model: str, **kw) -> Any:
     )
 
 
-def _build_huggingface(model: str, **kw) -> Any:
-    from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+class HuggingFaceInferenceChatModel(BaseChatModel):
+    """
+    Custom LangChain chat model wrapper around huggingface_hub.InferenceClient.
+    Uses free Serverless Inference API without router compute payment errors.
+    """
 
-    endpoint = HuggingFaceEndpoint(
-        repo_id=model,
-        huggingfacehub_api_token=kw.get("api_key") or settings.HUGGINGFACEHUB_API_TOKEN,
-        temperature=kw.get("temperature", 0.01),
-    )
-    return ChatHuggingFace(llm=endpoint)
+    model: str
+    api_key: str
+    temperature: float = 0.01
+    _client: Any = None
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        from huggingface_hub import InferenceClient
+        self._client = InferenceClient(api_key=self.api_key)
+
+    @property
+    def _llm_type(self) -> str:
+        return "huggingface-inference"
+
+    def _generate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Any = None,
+        **kwargs
+    ) -> ChatResult:
+        hf_messages = []
+        for m in messages:
+            if isinstance(m, SystemMessage):
+                hf_messages.append({"role": "system", "content": str(m.content)})
+            elif isinstance(m, AIMessage):
+                hf_messages.append({"role": "assistant", "content": str(m.content)})
+            else:
+                hf_messages.append({"role": "user", "content": str(m.content)})
+
+        res = self._client.chat.completions.create(
+            model=self.model,
+            messages=hf_messages,
+            temperature=self.temperature,
+            max_tokens=kwargs.get("max_tokens", 1024),
+        )
+        content = res.choices[0].message.content or ""
+        message = AIMessage(content=content)
+        generation = ChatGeneration(message=message)
+        return ChatResult(generations=[generation])
+
+
+def _build_huggingface(model: str, **kw) -> Any:
+    token = kw.get("api_key") or settings.HUGGINGFACEHUB_API_TOKEN
+    temp = kw.get("temperature", 0.01)
+    return HuggingFaceInferenceChatModel(model=model, api_key=token, temperature=temp)
+
 
 
 def _build_groq(model: str, **kw) -> Any:

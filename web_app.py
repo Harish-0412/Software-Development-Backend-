@@ -11,11 +11,14 @@ import warnings
 
 if sys.platform == 'win32':
     import asyncio
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
     # Use SelectorEventLoop instead of ProactorEventLoop on Windows
     # This prevents "Event loop is closed" errors during httpx cleanup
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     # Suppress async cleanup warnings
     warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*Event loop is closed.*")
+
 
 import asyncio
 import datetime

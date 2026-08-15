@@ -80,10 +80,13 @@ PROVIDERS: dict[str, ProviderInfo] = {
         display_name="HuggingFace",
         env_keys=["HUGGINGFACEHUB_API_TOKEN"],
         default_models=[
-            "mistralai/Mistral-7B-Instruct-v0.2",
-            "HuggingFaceH4/zephyr-7b-beta",
+            "Qwen/Qwen2.5-Coder-32B-Instruct",
             "Qwen/Qwen2.5-72B-Instruct",
-            "meta-llama/Llama-3.1-70B-Instruct",
+            "deepseek-ai/DeepSeek-V3",
+            "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+            "meta-llama/Llama-3.3-70B-Instruct",
+            "Qwen/Qwen2.5-7B-Instruct",
+            "Qwen/Qwen2.5-Coder-7B-Instruct",
         ],
     ),
     "groq": ProviderInfo(
