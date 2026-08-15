@@ -142,6 +142,35 @@ def run_red_team_scan(
         failed = total - passed
         score = (passed / total * 100) if total > 0 else 0.0
 
+        if total == 0 and (failed_attack_generation > 0 or json_errors > 0 or rate_limit_errors > 0):
+            error_details = []
+            if rate_limit_errors > 0:
+                error_details.append(f"{rate_limit_errors} tests hit API rate limits")
+            if json_errors > 0:
+                error_details.append(f"{json_errors} tests failed due to JSON evaluation formatting errors")
+            if failed_attack_generation > 0:
+                error_details.append(f"{failed_attack_generation} tests failed during attack simulation")
+            
+            err_msg = "Scan failed to generate valid test results: " + "; ".join(error_details)
+            logger.error(f"Scan {scan_id} failed: {err_msg}")
+            db_manager.update_scan_status(
+                scan_id,
+                status="failed",
+                total_tests=0,
+                passed=0,
+                failed=0,
+                overall_score=0.0,
+            )
+            return {
+                "status": "failed",
+                "error": err_msg,
+                "total_tests": 0,
+                "passed": 0,
+                "failed": 0,
+                "score": 0.0,
+                "results": [],
+            }
+
         # 6. Persist results
         db_manager.add_scan_results(scan_id, results)
         db_manager.update_scan_status(

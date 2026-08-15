@@ -43,65 +43,85 @@ class LangChainAdapter(DeepEvalBaseLLM):
     def load_model(self) -> Any:
         return self._chat_model
 
+    def _clean_json(self, text: str) -> str:
+        """Strip markdown code block ticks and extract valid JSON string."""
+        import re, json
+        s = str(text or "").strip()
+        if s.startswith("```"):
+            s = re.sub(r"^```(?:json)?\s*", "", s, flags=re.IGNORECASE)
+            s = re.sub(r"\s*```$", "", s)
+        s = s.strip()
+        try:
+            json.loads(s)
+            return s
+        except Exception:
+            match = re.search(r"(\{.*\}|\[.*\])", s, re.DOTALL)
+            if match:
+                try:
+                    candidate = match.group(1)
+                    json.loads(candidate)
+                    return candidate
+                except Exception:
+                    pass
+        return s
+
     def generate(self, prompt: str, schema: Any = None, **kwargs) -> str:
         from langchain_core.messages import HumanMessage
         import json
 
-        # For schema-based generation, try to use JSON mode if available
+        json_prompt = prompt
         if schema is not None:
-            # Check if the model supports JSON mode (OpenAI models)
+            json_prompt = (
+                f"{prompt}\n\n"
+                "CRITICAL: Respond ONLY with valid raw JSON. "
+                "Do NOT wrap in markdown code blocks (no ```json). "
+                "Do NOT include any conversational text."
+            )
             if self._supports_json_mode and hasattr(self._chat_model, 'model_kwargs'):
                 original_kwargs = self._chat_model.model_kwargs.copy() if self._chat_model.model_kwargs else {}
                 self._chat_model.model_kwargs = self._chat_model.model_kwargs or {}
                 self._chat_model.model_kwargs['response_format'] = {"type": "json_object"}
-                
-                # Ensure prompt asks for JSON
-                json_prompt = f"{prompt}\n\nYou must respond with valid JSON only."
                 try:
                     response = self._chat_model.invoke([HumanMessage(content=json_prompt)])
-                    # Restore original kwargs
                     self._chat_model.model_kwargs = original_kwargs
-                    return response.content
-                except Exception as e:
-                    # Restore and fallback
+                    return self._clean_json(response.content)
+                except Exception:
                     self._chat_model.model_kwargs = original_kwargs
-                    raise TypeError(f"JSON mode failed: {e}. Using fallback.")
-            else:
-                # For other models, raise TypeError to trigger DeepTeam's JSON fallback
-                raise TypeError("Schema-based generation not supported, use JSON fallback")
-        
-        response = self._chat_model.invoke([HumanMessage(content=prompt)])
-        return response.content
+
+        response = self._chat_model.invoke([HumanMessage(content=json_prompt)])
+        content = response.content
+        if schema is not None:
+            content = self._clean_json(content)
+        return content
 
     async def a_generate(self, prompt: str, schema: Any = None, **kwargs) -> str:
         from langchain_core.messages import HumanMessage
         import json
 
-        # For schema-based generation, try to use JSON mode if available
+        json_prompt = prompt
         if schema is not None:
-            # Check if the model supports JSON mode (OpenAI models)
+            json_prompt = (
+                f"{prompt}\n\n"
+                "CRITICAL: Respond ONLY with valid raw JSON. "
+                "Do NOT wrap in markdown code blocks (no ```json). "
+                "Do NOT include any conversational text."
+            )
             if self._supports_json_mode and hasattr(self._chat_model, 'model_kwargs'):
                 original_kwargs = self._chat_model.model_kwargs.copy() if self._chat_model.model_kwargs else {}
                 self._chat_model.model_kwargs = self._chat_model.model_kwargs or {}
                 self._chat_model.model_kwargs['response_format'] = {"type": "json_object"}
-                
-                # Ensure prompt asks for JSON
-                json_prompt = f"{prompt}\n\nYou must respond with valid JSON only."
                 try:
                     response = await self._chat_model.ainvoke([HumanMessage(content=json_prompt)])
-                    # Restore original kwargs
                     self._chat_model.model_kwargs = original_kwargs
-                    return response.content
-                except Exception as e:
-                    # Restore and fallback
+                    return self._clean_json(response.content)
+                except Exception:
                     self._chat_model.model_kwargs = original_kwargs
-                    raise TypeError(f"JSON mode failed: {e}. Using fallback.")
-            else:
-                # For other models, raise TypeError to trigger DeepTeam's JSON fallback
-                raise TypeError("Schema-based generation not supported, use JSON fallback")
 
-        response = await self._chat_model.ainvoke([HumanMessage(content=prompt)])
-        return response.content
+        response = await self._chat_model.ainvoke([HumanMessage(content=json_prompt)])
+        content = response.content
+        if schema is not None:
+            content = self._clean_json(content)
+        return content
 
     def get_model_name(self) -> str:
         return self._model_name

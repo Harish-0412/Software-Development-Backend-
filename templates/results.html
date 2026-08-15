@@ -260,12 +260,34 @@ function renderResults() {
     }
 
     if (filtered.length === 0) {
-        $('#resultsContainer').html(`
+        let emptyHtml = `
             <div class="text-center text-muted py-4">
                 <i class="fas fa-search me-2"></i>
-                ${allResults.length === 0 ? 'No results yet. Scan may still be running.' : 'No results match your filter.'}
+                No results match your filter.
             </div>
-        `);
+        `;
+        if (allResults.length === 0) {
+            emptyHtml = `
+                <div class="alert alert-warning text-start mx-auto my-3 p-4" style="max-width: 750px; border-left: 5px solid #ffc107;">
+                    <h5 class="alert-heading text-dark fw-bold mb-2">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        No Test Results Recorded
+                    </h5>
+                    <p class="text-secondary mb-2">
+                        This scan completed with 0 test cases stored. Common reasons include:
+                    </p>
+                    <ul class="text-secondary mb-3">
+                        <li>The Evaluator model failed to return structured JSON during evaluation.</li>
+                        <li>The LLM provider hit rate-limit caps (Tokens Per Minute).</li>
+                    </ul>
+                    <div class="d-flex gap-2">
+                        <a href="/attack" class="btn btn-sm btn-danger"><i class="fas fa-crosshairs me-1"></i> Configure New Attack</a>
+                        <a href="/config" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cog me-1"></i> Check Provider Keys</a>
+                    </div>
+                </div>
+            `;
+        }
+        $('#resultsContainer').html(emptyHtml);
         return;
     }
 
