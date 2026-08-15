@@ -270,6 +270,15 @@ async def create_scan(request: Request):
         if not data.get(field):
             raise HTTPException(400, f"Missing required field: {field}")
 
+    # Validate: DeepTeam requires either a framework or vulnerabilities
+    has_framework = bool(data.get("framework"))
+    has_vulns = bool(data.get("vulnerabilities"))
+    if not has_framework and not has_vulns:
+        raise HTTPException(
+            400,
+            "You must select at least one vulnerability OR choose a compliance framework before launching a scan."
+        )
+
     # Create DB record
     scan_run = db_manager.create_scan_run(
         name=data["scan_name"],

@@ -458,6 +458,19 @@ async function launchScan() {
     const fw = $('#framework').val();
     const mode = $('#scanMode').val();
 
+    // Validate: must have either a framework or at least one vulnerability
+    if (!fw && mode === 'custom' && selectedVulns.size === 0) {
+        // Auto-select all vulnerabilities as a safe default
+        selectAllVulns();
+        showToast('No vulnerabilities selected — auto-selected all. You can deselect any before re-launching.', 'warning');
+        return;
+    }
+
+    if (!fw && mode === 'framework') {
+        showToast('Please select a Compliance Framework from the dropdown, or switch to Custom mode and select vulnerabilities.', 'error');
+        return;
+    }
+
     // Build payload
     const payload = {
         scan_name: scanName,

@@ -77,12 +77,13 @@ def run_red_team_scan(
         logger.info(f"Attacks per vulnerability type: {attacks_per_vuln}")
 
         # 3. Create RedTeamer
+        # max_concurrent=1: run sequentially to avoid rate limits on free-tier APIs (Groq etc.)
         red_teamer = RedTeamer(
             simulator_model=simulator_model,
             evaluation_model=evaluation_model,
             target_purpose=target_purpose,
             async_mode=True,
-            max_concurrent=5,
+            max_concurrent=1,
         )
 
         # 4. Execute red_team scan
