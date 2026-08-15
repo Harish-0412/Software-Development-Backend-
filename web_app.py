@@ -88,6 +88,11 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 @app.on_event("startup")
 async def startup():
     import os
+    from dotenv import load_dotenv
+    env_file = BASE_DIR / ".env"
+    if env_file.exists():
+        load_dotenv(env_file, override=True)
+    
     init_db()
     logger.info("Database initialized")
     
@@ -101,6 +106,7 @@ async def startup():
     
     if saved_keys:
         logger.info(f"Loaded {len(saved_keys)} provider API keys from database")
+
 
 
 # ---------------------------------------------------------------------------

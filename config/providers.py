@@ -69,10 +69,10 @@ PROVIDERS: dict[str, ProviderInfo] = {
         display_name="AWS Bedrock",
         env_keys=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
         default_models=[
-            "anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "apac.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
             "anthropic.claude-3-haiku-20240307-v1:0",
             "amazon.titan-text-premier-v1:0",
-            "meta.llama3-1-70b-instruct-v1:0",
         ],
     ),
     "huggingface": ProviderInfo(
@@ -80,9 +80,10 @@ PROVIDERS: dict[str, ProviderInfo] = {
         display_name="HuggingFace",
         env_keys=["HUGGINGFACEHUB_API_TOKEN"],
         default_models=[
+            "mistralai/Mistral-7B-Instruct-v0.2",
+            "HuggingFaceH4/zephyr-7b-beta",
+            "Qwen/Qwen2.5-72B-Instruct",
             "meta-llama/Llama-3.1-70B-Instruct",
-            "mistralai/Mixtral-8x7B-Instruct-v0.1",
-            "google/gemma-2-27b-it",
         ],
     ),
     "groq": ProviderInfo(
