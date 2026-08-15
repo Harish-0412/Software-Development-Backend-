@@ -3,7 +3,6 @@
  **Enterprise-Grade Automated Security Testing for Large Language Models**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-FF4B4B.svg)](https://streamlit.io)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com)
 [![DeepTeam](https://img.shields.io/badge/DeepTeam-3.8+-orange.svg)](https://github.com/confident-ai/deepeval)
